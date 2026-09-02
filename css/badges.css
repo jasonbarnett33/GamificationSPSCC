@@ -1,0 +1,182 @@
+/* Badge types: Streak, Quest, Teamwork, Scholar, Campus. Tiers 0–2 (basic → upgraded). */
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.progress-badges {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.progress-badges .badge-row-label {
+  margin: 0 0 0.55rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 2px solid var(--badge-color, var(--text-muted));
+  background: var(--badge-fill, transparent);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: none;
+}
+
+.badge svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+}
+
+.badge.badge-tier-0 {
+  --badge-color: #94a3b8;
+  --badge-fill: #475569;
+  --badge-glow: transparent;
+  color: #e2e8f0;
+}
+
+.badge-tier-2 {
+  animation: badge-border-pulse 2s ease-in-out infinite;
+}
+
+.badge-streak {
+  --badge-color: #fb7185;
+  --badge-fill: #9f1239;
+  --badge-glow: rgba(251, 113, 133, 0.75);
+}
+
+.badge-quest {
+  --badge-color: #facc15;
+  --badge-fill: #854d0e;
+  --badge-glow: rgba(250, 204, 21, 0.7);
+}
+
+.badge-teamwork {
+  --badge-color: #c4b5fd;
+  --badge-fill: #5b21b6;
+  --badge-glow: rgba(167, 139, 250, 0.75);
+}
+
+.badge-scholar {
+  --badge-color: #67e8f9;
+  --badge-fill: #0e7490;
+  --badge-glow: rgba(34, 211, 238, 0.7);
+}
+
+.badge-campus {
+  --badge-color: #fdba74;
+  --badge-fill: #c2410c;
+  --badge-glow: rgba(251, 146, 60, 0.75);
+}
+
+.badge-raid {
+  --badge-color: #fca5a5;
+  --badge-fill: #7f1d1d;
+  --badge-glow: rgba(248, 113, 113, 0.75);
+}
+
+.badge-completionist {
+  --badge-color: #6ee7b7;
+  --badge-fill: #047857;
+  --badge-glow: rgba(52, 211, 153, 0.75);
+}
+
+.badge.badge-unearned {
+  --badge-color: var(--text-muted);
+  --badge-fill: transparent;
+  --badge-glow: transparent;
+  opacity: 0.4;
+  border-style: dashed;
+  color: var(--text-muted);
+  filter: none;
+  animation: none;
+  box-shadow: none;
+}
+
+@keyframes badge-border-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--badge-glow);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px var(--badge-color),
+      0 0 8px var(--badge-glow);
+  }
+}
+
+.leaderboard-row-card .badge {
+  width: 1.55rem;
+  height: 1.55rem;
+}
+
+.leaderboard-row-card .badge svg {
+  width: 0.78rem;
+  height: 0.78rem;
+}
+
+.leaderboard-row-card .badge-tier-2 {
+  animation-name: badge-border-pulse-sm;
+}
+
+.leaderboard-badges {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+}
+
+@keyframes badge-border-pulse-sm {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--badge-glow);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px var(--badge-color),
+      0 0 6px var(--badge-glow);
+  }
+}
+
+.badge-test-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 540px) {
+  .badge-test-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 720px) {
+  .badge-test-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Leaderboard: badges sit after Total XP */
+.leaderboard-ranked-header,
+.leaderboard-row-grid {
+  grid-template-columns: 2.25rem minmax(5rem, 1.1fr) 3.25rem minmax(12.5rem, 1.7fr) repeat(3, minmax(4.25rem, 1fr));
+}
+
+@media (max-width: 540px) {
+  .leaderboard-ranked-header,
+  .leaderboard-row-grid {
+    min-width: 52rem;
+  }
+}
