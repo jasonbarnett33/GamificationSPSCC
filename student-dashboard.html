@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard — Class Quest</title>
+    <link rel="stylesheet" href="css/styles.css?v=31" />
+    <link rel="stylesheet" href="css/frames.css?v=20" />
+    <link rel="stylesheet" href="css/badges.css?v=34" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>Class Quest</h1>
+        <div class="subtitle" id="welcome-text">Loading…</div>
+      </div>
+      <nav class="nav-links">
+        <a href="leaderboard.html" class="btn btn-secondary btn-sm">Leaderboard</a>
+        <button type="button" id="sign-out" class="btn btn-secondary btn-sm">Sign out</button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="progress-section" class="card frame-tier-0 collapsible-card" data-collapse-key="student-progress">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Your progress</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <div id="xp-grid" class="xp-grid">
+            <div class="loading">Loading XP…</div>
+          </div>
+          <div id="progress-badges" class="progress-badges"></div>
+          <div id="progress-rewards" class="progress-rewards">
+            <div class="loading">Loading rewards…</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="level-up" class="card level-up-banner hidden" role="status" aria-labelledby="level-up-title">
+        <div class="sparkle" aria-hidden="true">⭐</div>
+        <h2 id="level-up-title">Level up!</h2>
+        <p class="muted">You grew stronger in:</p>
+        <ul id="level-up-list"></ul>
+        <p id="level-up-keys" class="muted hidden"></p>
+        <button type="button" id="level-up-close" class="btn btn-primary btn-sm">Nice</button>
+      </section>
+
+      <section id="quest-update-notice" class="card notice-banner hidden" role="status">
+        <h2>Quests updated</h2>
+        <p class="muted">Your instructor changed quests or raids. Refresh to see the latest.</p>
+        <button type="button" id="quest-update-refresh" class="btn btn-primary btn-sm">Refresh</button>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="student-quests">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Available quests</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted" id="quest-week-copy">Most quests are honor system. Some ask for a short answer or instructor approval.</p>
+          <ul id="quest-list" class="quest-list">
+            <li class="loading">Loading quests…</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="student-raids">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Available raids</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Always available. Join so your class can hit the threshold. Your instructor must approve before everyone in the class gets XP.</p>
+          <ul id="raid-list" class="quest-list">
+            <li class="loading">Loading raids…</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="student-completed">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Completed quests</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Your log, including pending reviews and streak progress.</p>
+          <ul id="completed-list" class="quest-list">
+            <li class="loading">Loading…</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="student-redeemed">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Redeemed rewards</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Rewards you claimed from chests. Instructor rewards stay listed here until Jason fulfills them.</p>
+          <ul id="redeemed-list" class="quest-list">
+            <li class="loading">Loading…</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="cosmetics-test-panel" class="card test-panel collapsible-card" data-collapse-key="student-cosmetics" data-collapse-default="collapsed">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="false">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Cosmetics test (temporary)</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Preview frame tiers. Frames still use this panel; badges now come from quests, levels, and raids.</p>
+          <div class="form-group">
+            <label for="frame-tier-slider">
+              Frame tier
+              <span id="frame-tier-readout" class="tier-readout">0 — Plain</span>
+            </label>
+            <input type="range" id="frame-tier-slider" min="0" max="9" step="1" value="0" />
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem">
+            <button type="button" id="frame-tier-apply" class="btn btn-primary btn-sm">Apply frame</button>
+            <button type="button" id="cosmetics-reset" class="btn btn-secondary btn-sm">Reset frame</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js?v=13"></script>
+    <script src="js/levels.js?v=25"></script>
+    <script src="js/cosmetics.js?v=34"></script>
+    <script src="js/auth.js?v=27"></script>
+    <script src="js/quest-catalog.js?v=36"></script>
+    <script src="js/db.js?v=36"></script>
+    <script src="js/collapse.js?v=26"></script>
+    <script src="js/student-dashboard.js?v=36"></script>
+  </body>
+</html>

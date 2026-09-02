@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Instructor Dashboard — Class Quest</title>
+    <link rel="stylesheet" href="css/styles.css?v=31" />
+    <link rel="stylesheet" href="css/frames.css?v=20" />
+    <link rel="stylesheet" href="css/badges.css?v=34" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>Instructor Dashboard</h1>
+        <div class="subtitle" id="instructor-name">Loading…</div>
+      </div>
+      <nav class="nav-links">
+        <button type="button" id="tab-class" class="btn btn-primary btn-sm">Class</button>
+        <button type="button" id="tab-leaderboard" class="btn btn-secondary btn-sm">Leaderboard</button>
+        <button type="button" id="sign-out" class="btn btn-secondary btn-sm">Sign out</button>
+      </nav>
+    </header>
+
+    <main id="view-class" class="wide">
+      <section class="card collapsible-card" data-collapse-key="instructor-students">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Students</h2>
+          </button>
+          <div class="collapsible-actions">
+            <button type="button" id="seed-test-students-btn" class="btn btn-secondary btn-sm">Add test students</button>
+          </div>
+        </div>
+        <div class="collapsible-body">
+          <div class="leaderboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Real name</th>
+                  <th>Character</th>
+                  <th>Class</th>
+                  <th>Total XP</th>
+                  <th>Teamwork</th>
+                  <th>Studying</th>
+                  <th>College</th>
+                  <th>Keys</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="students-body">
+                <tr><td colspan="9" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="instructor-quests">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Quests</h2>
+          </button>
+          <div class="collapsible-actions">
+            <button type="button" id="reload-quest-catalog-btn" class="btn btn-secondary btn-sm">Reload quest catalog</button>
+            <button type="button" id="add-quest-btn" class="btn btn-primary btn-sm">Add quest</button>
+          </div>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted" id="quest-catalog-week-copy">Loading week schedule…</p>
+          <div class="leaderboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Name</th>
+                  <th>Week</th>
+                  <th>XP (T / S / C)</th>
+                  <th>Flags</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="quests-body">
+                <tr><td colspan="6" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="instructor-raids">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Raids</h2>
+          </button>
+          <div class="collapsible-actions">
+            <button type="button" id="add-raid-btn" class="btn btn-primary btn-sm">Add raid</button>
+          </div>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Always available. Students join; you approve. XP goes to everyone in that class.</p>
+          <div class="leaderboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Name</th>
+                  <th>Need</th>
+                  <th>XP (T / S / C)</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="raids-body">
+                <tr><td colspan="5" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3 class="raid-progress-heading">Class progress</h3>
+          <div class="leaderboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Raid</th>
+                  <th>Class</th>
+                  <th>Joined</th>
+                  <th>Who joined</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="raid-progress-body">
+                <tr><td colspan="6" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="instructor-rewards">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Rewards</h2>
+          </button>
+          <div class="collapsible-actions">
+            <button type="button" id="seed-test-rewards-btn" class="btn btn-secondary btn-sm">Sync reward catalog</button>
+            <button type="button" id="add-reward-btn" class="btn btn-primary btn-sm">Add reward</button>
+          </div>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Chest options students can pick. Inactive rewards are hidden from new chest offers. Pooled rewards wait for several redemptions before you fulfill them.</p>
+          <div class="leaderboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Name</th>
+                  <th>Flags</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="rewards-body">
+                <tr><td colspan="4" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="instructor-redemptions">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Reward redemptions</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Students pick these after unlocking a chest. Mark offline rewards fulfilled after you complete them. Pooled rewards wait until enough redemptions come in. Automated ones (frame upgrade, classmate XP) are applied by the site.</p>
+          <div class="leaderboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Student</th>
+                  <th>Reward</th>
+                  <th>Details</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="redemptions-body">
+                <tr><td colspan="7" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="instructor-completions">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Recent quest completions</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <div class="leaderboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Quest</th>
+                  <th>Answer</th>
+                  <th>Student</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="completions-body">
+                <tr><td colspan="6" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <main id="view-leaderboard" class="wide hidden">
+      <section class="card collapsible-card" data-collapse-key="instructor-class-totals">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Class vs class</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Combined XP for each class. Same board students see.</p>
+          <div class="leaderboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Class</th>
+                  <th>Total XP</th>
+                </tr>
+              </thead>
+              <tbody id="class-totals-body">
+                <tr><td colspan="3" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card collapsible-card" data-collapse-key="instructor-class-rankings">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Class rankings</h2>
+          </button>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Character names and XP only. Choose a class to project.</p>
+          <div class="form-group">
+            <label for="leaderboard-class-filter">Show classmates from</label>
+            <select id="leaderboard-class-filter"></select>
+          </div>
+          <div class="leaderboard-table-wrap leaderboard-ranked-wrap">
+            <div class="leaderboard-ranked-header" aria-hidden="true">
+              <span>#</span>
+              <span>Character</span>
+              <span>Total</span>
+              <span>Badges</span>
+              <span>Teamwork</span>
+              <span>Studying</span>
+              <span>College</span>
+            </div>
+            <div id="leaderboard-body" class="leaderboard-rows">
+              <p class="loading">Loading…</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="quest-modal" class="modal-backdrop hidden">
+      <div class="modal" role="dialog" aria-labelledby="quest-modal-title">
+        <h2 id="quest-modal-title">Edit quest</h2>
+        <form id="quest-form">
+          <input type="hidden" id="quest-id" />
+          <div class="form-group">
+            <label for="quest-name">Name</label>
+            <input type="text" id="quest-name" required />
+          </div>
+          <div class="form-group">
+            <label for="quest-description">Description / instructions</label>
+            <textarea id="quest-description" placeholder="Shown under the quest name on the student dashboard"></textarea>
+          </div>
+          <div class="form-group">
+            <span>Weeks this quest is available</span>
+            <div class="checkbox-row" style="margin-top: 0.5rem">
+              <input type="checkbox" id="quest-every-week" />
+              <label for="quest-every-week" style="margin: 0">Every week</label>
+            </div>
+            <div id="quest-week-picks" class="week-pick-grid"></div>
+            <p class="muted form-hint">Students only see this quest in the weeks you check.</p>
+          </div>
+          <div class="form-row three">
+            <div class="form-group">
+              <label for="quest-xp-teamwork">Teamwork XP</label>
+              <input type="number" id="quest-xp-teamwork" min="0" value="0" />
+            </div>
+            <div class="form-group">
+              <label for="quest-xp-studying">Studying XP</label>
+              <input type="number" id="quest-xp-studying" min="0" value="0" />
+            </div>
+            <div class="form-group">
+              <label for="quest-xp-college">College Success XP</label>
+              <input type="number" id="quest-xp-college" min="0" value="0" />
+            </div>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="quest-active" checked />
+            <label for="quest-active" style="margin: 0">Active (visible to students)</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="quest-one-time" />
+            <label for="quest-one-time" style="margin: 0">One-time only (cannot repeat)</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="quest-weekly" />
+            <label for="quest-weekly" style="margin: 0">Once per week (resets Monday)</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="quest-requires-validation" />
+            <label for="quest-requires-validation" style="margin: 0">Needs instructor approval (shows as Pending)</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="quest-requires-text" />
+            <label for="quest-requires-text" style="margin: 0">Require a short written answer</label>
+          </div>
+          <div class="form-group" id="quest-text-prompt-group">
+            <label for="quest-text-prompt">Answer prompt</label>
+            <textarea id="quest-text-prompt" placeholder="What should the student write about?"></textarea>
+            <p class="muted form-hint">Students get 400 characters (a few sentences). You’ll see their answer on Recent completions.</p>
+          </div>
+          <div class="form-row two">
+            <div class="form-group">
+              <label for="quest-required-count">Completions needed for XP</label>
+              <input type="number" id="quest-required-count" min="1" value="1" />
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end">
+              <div class="checkbox-row" style="margin-bottom: 0.65rem">
+                <input type="checkbox" id="quest-unique-days" />
+                <label for="quest-unique-days" style="margin: 0">Each log on a different day</label>
+              </div>
+            </div>
+          </div>
+          <p class="muted form-hint">Set completions needed to 5 and check unique days for a math streak. No partial XP.</p>
+          <div class="modal-actions">
+            <button type="button" id="cancel-quest" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save quest</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="student-modal" class="modal-backdrop hidden">
+      <div class="modal" role="dialog" aria-labelledby="student-modal-title">
+        <h2 id="student-modal-title">Edit student</h2>
+        <form id="student-form">
+          <input type="hidden" id="student-id" />
+          <p class="muted" id="student-real-name"></p>
+          <div class="form-group">
+            <label for="student-character-name">Character name</label>
+            <input type="text" id="student-character-name" />
+          </div>
+          <div class="form-group">
+            <label for="student-class-id">Class</label>
+            <select id="student-class-id" required></select>
+          </div>
+          <div class="form-row three">
+            <div class="form-group">
+              <label for="student-xp-teamwork">Teamwork XP</label>
+              <input type="number" id="student-xp-teamwork" min="0" value="0" />
+            </div>
+            <div class="form-group">
+              <label for="student-xp-studying">Studying XP</label>
+              <input type="number" id="student-xp-studying" min="0" value="0" />
+            </div>
+            <div class="form-group">
+              <label for="student-xp-college">College Success XP</label>
+              <input type="number" id="student-xp-college" min="0" value="0" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="student-reward-keys">Keys</label>
+            <input type="number" id="student-reward-keys" min="0" step="1" value="0" />
+            <p class="muted form-hint">Unspent chest keys. If you leave this unchanged, a level-up from the XP fields above still grants keys automatically.</p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" id="cancel-student" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save student</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="raid-modal" class="modal-backdrop hidden">
+      <div class="modal" role="dialog" aria-labelledby="raid-modal-title">
+        <h2 id="raid-modal-title">Edit raid</h2>
+        <form id="raid-form">
+          <input type="hidden" id="raid-id" />
+          <div class="form-group">
+            <label for="raid-name">Name</label>
+            <input type="text" id="raid-name" required />
+          </div>
+          <div class="form-group">
+            <label for="raid-description">Description / instructions</label>
+            <textarea id="raid-description" placeholder="Shown on the student dashboard"></textarea>
+          </div>
+          <div class="form-row three">
+            <div class="form-group">
+              <label for="raid-xp-teamwork">Teamwork XP</label>
+              <input type="number" id="raid-xp-teamwork" min="0" value="0" />
+            </div>
+            <div class="form-group">
+              <label for="raid-xp-studying">Studying XP</label>
+              <input type="number" id="raid-xp-studying" min="0" value="0" />
+            </div>
+            <div class="form-group">
+              <label for="raid-xp-college">College Success XP</label>
+              <input type="number" id="raid-xp-college" min="0" value="0" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="raid-required">Students who must join (per class)</label>
+            <input type="number" id="raid-required" min="1" value="10" />
+            <p class="muted form-hint">Always needs your approval. After you approve, every student in that class gets the XP.</p>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="raid-active" checked />
+            <label for="raid-active" style="margin: 0">Active (visible to students)</label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" id="cancel-raid" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save raid</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    </div>
+
+    <div id="reward-modal" class="modal-backdrop hidden">
+      <div class="modal" role="dialog" aria-labelledby="reward-modal-title">
+        <h2 id="reward-modal-title">Edit reward</h2>
+        <form id="reward-form">
+          <input type="hidden" id="reward-id" />
+          <div class="form-group">
+            <label for="reward-name">Name</label>
+            <input type="text" id="reward-name" required />
+          </div>
+          <div class="form-group">
+            <label for="reward-description">Description</label>
+            <textarea id="reward-description" placeholder="Shown when a student is choosing a chest reward"></textarea>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="reward-active" checked />
+            <label for="reward-active" style="margin: 0">Active (can appear in chest offers)</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="reward-requires-text" />
+            <label for="reward-requires-text" style="margin: 0">Require a short written answer</label>
+          </div>
+          <div class="form-group" id="reward-text-prompt-group">
+            <label for="reward-text-prompt">Answer prompt</label>
+            <textarea id="reward-text-prompt" placeholder="What should the student write?"></textarea>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="reward-automated" />
+            <label for="reward-automated" style="margin: 0">Automated by the site (no fulfillment queue)</label>
+          </div>
+          <div class="form-group" id="reward-automated-type-group">
+            <label for="reward-automated-type">Automation</label>
+            <select id="reward-automated-type">
+              <option value="">None (just mark fulfilled)</option>
+              <option value="upgradeFrame">Upgrade profile frame</option>
+              <option value="addXpToClassmate">Add XP to a classmate</option>
+            </select>
+          </div>
+          <div class="form-group" id="reward-automated-xp-group">
+            <label for="reward-automated-xp">XP to give classmate</label>
+            <input type="number" id="reward-automated-xp" min="0" value="150" />
+            <p class="muted form-hint">Applied to a random tree when they pick a classmate.</p>
+          </div>
+          <div class="form-group" id="reward-pool-group">
+            <label for="reward-pool-size">Pooled redemptions needed</label>
+            <input type="number" id="reward-pool-size" min="0" value="0" />
+            <p class="muted form-hint">0 or 1 = fulfill each one. 5 means you wait for 5 redemptions, then fulfill the pool.</p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" id="cancel-reward" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save reward</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js?v=13"></script>
+    <script src="js/levels.js?v=25"></script>
+    <script src="js/cosmetics.js?v=34"></script>
+    <script src="js/auth.js?v=27"></script>
+    <script src="js/quest-catalog.js?v=36"></script>
+    <script src="js/db.js?v=36"></script>
+    <script src="js/leaderboard.js?v=20"></script>
+    <script src="js/collapse.js?v=26"></script>
+    <script src="js/instructor-dashboard.js?v=36"></script>
+  </body>
+</html>

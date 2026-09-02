@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leaderboard — Class Quest</title>
+    <link rel="stylesheet" href="css/styles.css?v=29" />
+    <link rel="stylesheet" href="css/frames.css?v=20" />
+    <link rel="stylesheet" href="css/badges.css?v=34" />
+  </head>
+  <body data-page="leaderboard">
+    <header class="app-header">
+      <div>
+        <h1>Leaderboard</h1>
+        <div class="subtitle">Live class rankings</div>
+      </div>
+      <nav class="nav-links">
+        <a href="student-dashboard.html" id="dashboard-link" class="btn btn-secondary btn-sm">Dashboard</a>
+        <button type="button" id="sign-out" class="btn btn-secondary btn-sm">Sign out</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Class vs class</h2>
+        <p class="muted">Combined XP for each class. Updates in real time.</p>
+        <div class="leaderboard-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Class</th>
+                <th>Total XP</th>
+              </tr>
+            </thead>
+            <tbody id="class-totals-body">
+              <tr><td colspan="3" class="loading">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Class rankings</h2>
+        <p class="muted">Character names and total XP for your class. Updates in real time.</p>
+        <div class="leaderboard-table-wrap leaderboard-ranked-wrap">
+          <div class="leaderboard-ranked-header" aria-hidden="true">
+            <span>#</span>
+            <span>Character</span>
+            <span>Total</span>
+            <span>Badges</span>
+            <span>Teamwork</span>
+            <span>Studying</span>
+            <span>College</span>
+          </div>
+          <div id="leaderboard-body" class="leaderboard-rows">
+            <p class="loading">Loading…</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js?v=13"></script>
+    <script src="js/levels.js?v=25"></script>
+    <script src="js/cosmetics.js?v=34"></script>
+    <script src="js/auth.js?v=27"></script>
+    <script src="js/quest-catalog.js?v=36"></script>
+    <script src="js/db.js?v=36"></script>
+    <script src="js/leaderboard.js?v=20"></script>
+  </body>
+</html>

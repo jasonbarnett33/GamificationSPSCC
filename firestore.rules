@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isInstructor() {
+      return isSignedIn() && userDoc().role == 'instructor';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isStudent() {
+      return isSignedIn() && userDoc().role == 'student';
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isInstructor()
+        || (isStudent() && resource.data.role == 'student');
+      allow create: if isOwner(userId)
+        || (isInstructor() && request.resource.data.isTestStudent == true);
+      allow update: if isOwner(userId) || isInstructor()
+        || (isStudent()
+          && resource.data.role == 'student'
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['xp', 'rewardKeys', 'rewardKeysEarned', 'rewardChests', 'updatedAt']));
+      allow delete: if isInstructor();
+    }
+
+    // Real name + email — instructor and the account owner only (not classmates).
+    match /privateProfiles/{userId} {
+      allow read, create, update: if isOwner(userId) || isInstructor();
+      allow delete: if isInstructor();
+    }
+
+    match /publicProfiles/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) || isInstructor();
+      allow update: if isOwner(userId) || isInstructor()
+        || (isStudent()
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['xp', 'updatedAt', 'characterName', 'classId', 'className']));
+      allow delete: if isInstructor();
+    }
+
+    match /quests/{questId} {
+      allow read: if isSignedIn();
+      allow write: if isInstructor();
+    }
+
+    match /completions/{completionId} {
+      allow read: if isSignedIn() && (isInstructor() || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['userId', 'questId', 'completedAt']);
+      allow update, delete: if isInstructor();
+    }
+
+    match /raids/{raidId} {
+      allow read: if isSignedIn();
+      allow write: if isInstructor();
+    }
+
+    match /raidParticipations/{participationId} {
+      allow read: if isSignedIn();
+      allow create: if isInstructor()
+        || (isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.keys().hasAll(['raidId', 'userId', 'classId', 'joinedAt']));
+      allow update, delete: if isInstructor();
+    }
+
+    match /raidAwards/{awardId} {
+      allow read: if isSignedIn();
+      allow write: if isInstructor();
+    }
+
+    match /rewards/{rewardId} {
+      allow read: if isSignedIn();
+      allow write: if isInstructor();
+    }
+
+    match /redemptions/{redemptionId} {
+      allow read: if isSignedIn() && (isInstructor() || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['userId', 'rewardId', 'createdAt']);
+      allow update, delete: if isInstructor();
+    }
+  }
+}

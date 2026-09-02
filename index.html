@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — Class Quest</title>
+    <link rel="stylesheet" href="css/styles.css?v=27" />
+  </head>
+  <body>
+    <div id="login-view" class="login-screen">
+      <div class="logo" aria-hidden="true">⚔️</div>
+      <h1>Class Quest</h1>
+      <p>Sign in with your Google account to join your class gamification adventure.</p>
+      <button type="button" id="google-sign-in" class="btn btn-google">
+        Sign in with Google
+      </button>
+      <p id="login-error" class="muted hidden" style="margin-top: 1rem; color: var(--danger)"></p>
+    </div>
+
+    <div id="loading-view" class="login-screen hidden">
+      <p class="muted">Signing you in…</p>
+    </div>
+
+    <div id="onboarding-view" class="login-screen hidden">
+      <div class="card onboarding-card">
+        <h2 style="margin-top: 0">Welcome!</h2>
+        <p class="muted">Set up your profile before entering the quest board.</p>
+
+        <div class="privacy-notice" role="note">
+          <p>
+            Sign up with your school (or any other) email. Your sign-in email is used only to log you in
+            and only visible to Jason. Your real name is optional and, if you share it, is visible only
+            to Jason as well, not to classmates. Prefer not to enter it here? That’s fine! Just tell
+            Jason who you are either by email or in person so he can match you to your account. Your
+            character name, class, XP, levels, badges, and leaderboard info are the only things visible
+            to classmates in your class.
+          </p>
+        </div>
+
+        <form id="onboarding-form">
+          <div class="form-group">
+            <label for="real-name">Your real name <span class="muted">(optional — Jason only)</span></label>
+            <input type="text" id="real-name" autocomplete="name" placeholder="Jane Smith" />
+          </div>
+          <div class="form-group">
+            <label for="character-name">Character name <span class="muted">(optional — visible to classmates)</span></label>
+            <input type="text" id="character-name" autocomplete="off" placeholder="Shadow Scholar" />
+          </div>
+          <div class="form-group" id="class-group">
+            <label for="class-id">Your class</label>
+            <select id="class-id" required></select>
+          </div>
+          <div class="checkbox-row privacy-agree-row">
+            <input type="checkbox" id="privacy-agree" required />
+            <label for="privacy-agree" style="margin: 0">I agree to the privacy statement above</label>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%">Enter</button>
+        </form>
+        <p id="onboarding-error" class="muted hidden" style="margin-top: 0.75rem; color: var(--danger)"></p>
+      </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js?v=13"></script>
+    <script src="js/levels.js?v=25"></script>
+    <script src="js/cosmetics.js?v=20"></script>
+    <script src="js/auth.js?v=27"></script>
+    <script>
+      const loginView = document.getElementById('login-view');
+      const loadingView = document.getElementById('loading-view');
+      const onboardingView = document.getElementById('onboarding-view');
+      const loginError = document.getElementById('login-error');
+      const onboardingError = document.getElementById('onboarding-error');
+
+      function showError(el, message) {
+        el.textContent = message;
+        el.classList.remove('hidden');
+      }
+
+      function showLoading() {
+        loginView.classList.add('hidden');
+        onboardingView.classList.add('hidden');
+        loadingView.classList.remove('hidden');
+      }
+
+      function showLogin() {
+        loadingView.classList.add('hidden');
+        onboardingView.classList.add('hidden');
+        loginView.classList.remove('hidden');
+      }
+
+      document.getElementById('google-sign-in').addEventListener('click', async () => {
+        loginError.classList.add('hidden');
+        try {
+          await signInWithGoogle();
+        } catch (err) {
+          showLogin();
+          showError(loginError, err.message || 'Sign in failed. Please try again.');
+        }
+      });
+
+      document.getElementById('onboarding-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        onboardingError.classList.add('hidden');
+        const user = auth.currentUser;
+        if (!user) return;
+
+        if (!document.getElementById('privacy-agree').checked) {
+          showError(onboardingError, 'Please agree to the privacy statement to continue.');
+          return;
+        }
+
+        const realName = document.getElementById('real-name').value;
+        const characterName = document.getElementById('character-name').value;
+        const classId = document.getElementById('class-id').value;
+        const isInstructor = isInstructorEmail(user.email);
+
+        if (!isInstructor && !classId) {
+          showError(onboardingError, 'Please choose your class.');
+          return;
+        }
+
+        try {
+          const profile = await saveUserProfile(user.uid, {
+            realName,
+            characterName,
+            email: user.email,
+            classId,
+            privacyAgreed: true,
+          });
+          window.location.href = redirectForRole(profile);
+        } catch (err) {
+          showError(onboardingError, err.message || 'Could not save profile.');
+        }
+      });
+
+      async function finishSignIn(user) {
+        if (!user) {
+          showLogin();
+          return;
+        }
+
+        showLoading();
+
+        try {
+          const profile = await getUserProfile(user.uid);
+          if (isOnboardingComplete(profile)) {
+            window.location.href = redirectForRole(profile);
+            return;
+          }
+
+          loadingView.classList.add('hidden');
+          loginView.classList.add('hidden');
+          onboardingView.classList.remove('hidden');
+          fillClassSelect(document.getElementById('class-id'), profile?.classId);
+          if (isInstructorEmail(user.email)) {
+            document.getElementById('class-group').classList.add('hidden');
+            document.getElementById('class-id').required = false;
+          }
+          if (profile?.realName) document.getElementById('real-name').value = profile.realName;
+          if (profile?.characterName) document.getElementById('character-name').value = profile.characterName;
+        } catch (err) {
+          console.error('Profile load error:', err);
+          loadingView.classList.add('hidden');
+          loginView.classList.add('hidden');
+          onboardingView.classList.remove('hidden');
+          showError(
+            onboardingError,
+            'Signed in, but Firestore blocked reading your profile. In Firebase Console, open Firestore → Rules, paste the rules from firestore.rules in this project, then click Publish.'
+          );
+        }
+      }
+
+      onAuthReady((user) => finishSignIn(user));
+    </script>
+  </body>
+</html>
