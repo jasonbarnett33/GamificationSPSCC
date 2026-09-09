@@ -697,25 +697,46 @@ function subscribeStudents(callback) {
   );
 }
 
+async function commitBatches(ops, chunkSize = 400) {
+  for (let i = 0; i < ops.length; i += chunkSize) {
+    const batch = db.batch();
+    ops.slice(i, i + chunkSize).forEach((apply) => apply(batch));
+    await batch.commit();
+  }
+}
+
 async function publishRosterToLeaderboard(students) {
-  if (!students.length) return;
-  const batch = db.batch();
-  students.forEach((s) => {
-    batch.set(
-      db.collection('publicProfiles').doc(s.id),
-      {
-        characterName: s.characterName || '',
-        classId: s.classId || '',
-        className: classLabel(s.classId),
-        frameTier: normalizeFrameTier(s.frameTier),
-        badges: normalizeBadges(s.badges),
-        xp: s.xp || emptyXp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+  const rosterIds = new Set((students || []).map((s) => s.id));
+  const publicSnap = await db.collection('publicProfiles').get();
+  const ops = [];
+
+  (students || []).forEach((s) => {
+    ops.push((batch) => {
+      batch.set(
+        db.collection('publicProfiles').doc(s.id),
+        {
+          characterName: s.characterName || '',
+          classId: s.classId || '',
+          className: classLabel(s.classId),
+          frameTier: normalizeFrameTier(s.frameTier),
+          badges: normalizeBadges(s.badges),
+          xp: s.xp || emptyXp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    });
   });
-  await batch.commit();
+
+  // Remove leaderboard rows for students no longer on the roster (including after deletes).
+  publicSnap.docs.forEach((doc) => {
+    if (!rosterIds.has(doc.id)) {
+      ops.push((batch) => batch.delete(doc.ref));
+    }
+  });
+
+  if (!ops.length) return;
+  await commitBatches(ops);
 }
 
 async function updateStudentByInstructor(studentId, { characterName, classId, xp, rewardKeys }) {
@@ -1050,9 +1071,28 @@ async function replaceQuestCatalog({ force = false } = {}) {
 }
 
 async function deleteStudentByInstructor(studentId) {
-  await db.collection('users').doc(studentId).delete();
-  await db.collection('publicProfiles').doc(studentId).delete();
-  await db.collection('privateProfiles').doc(studentId).delete();
+  const id = String(studentId || '').trim();
+  if (!id) throw new Error('Missing student id.');
+
+  const [
+    completionsSnap,
+    participationsSnap,
+    redemptionsSnap,
+  ] = await Promise.all([
+    db.collection('completions').where('userId', '==', id).get(),
+    db.collection('raidParticipations').where('userId', '==', id).get(),
+    db.collection('redemptions').where('userId', '==', id).get(),
+  ]);
+
+  const ops = [];
+  ops.push((batch) => batch.delete(db.collection('users').doc(id)));
+  ops.push((batch) => batch.delete(db.collection('publicProfiles').doc(id)));
+  ops.push((batch) => batch.delete(db.collection('privateProfiles').doc(id)));
+  completionsSnap.docs.forEach((doc) => ops.push((batch) => batch.delete(doc.ref)));
+  participationsSnap.docs.forEach((doc) => ops.push((batch) => batch.delete(doc.ref)));
+  redemptionsSnap.docs.forEach((doc) => ops.push((batch) => batch.delete(doc.ref)));
+
+  await commitBatches(ops);
 }
 
 function subscribeQuests(onChange) {

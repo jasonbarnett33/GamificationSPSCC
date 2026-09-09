@@ -241,7 +241,7 @@ textarea {
 }
 
 .privacy-notice {
-  margin: 0 0 1rem;
+  margin: 0 0 0.65rem;
   padding: 0.85rem 0.95rem;
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -260,6 +260,7 @@ textarea {
 .privacy-agree-row {
   align-items: flex-start;
   text-align: left;
+  margin: 0 0 1rem;
 }
 
 .privacy-agree-row label {
