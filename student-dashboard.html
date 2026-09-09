@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Dashboard — Class Quest</title>
-    <link rel="stylesheet" href="css/styles.css?v=31" />
-    <link rel="stylesheet" href="css/frames.css?v=20" />
-    <link rel="stylesheet" href="css/badges.css?v=34" />
+    <link rel="stylesheet" href="css/styles.css?v=32" />
+    <link rel="stylesheet" href="css/frames.css?v=22" />
+    <link rel="stylesheet" href="css/badges.css?v=36" />
   </head>
   <body>
     <header class="app-header">
@@ -44,7 +44,7 @@
         <h2 id="level-up-title">Level up!</h2>
         <p class="muted">You grew stronger in:</p>
         <ul id="level-up-list"></ul>
-        <p id="level-up-keys" class="muted hidden"></p>
+        <p id="level-up-keys" class="level-up-keys hidden"></p>
         <button type="button" id="level-up-close" class="btn btn-primary btn-sm">Nice</button>
       </section>
 
@@ -113,29 +113,6 @@
           </ul>
         </div>
       </section>
-
-      <section id="cosmetics-test-panel" class="card test-panel collapsible-card" data-collapse-key="student-cosmetics" data-collapse-default="collapsed">
-        <div class="collapsible-header">
-          <button type="button" class="collapsible-toggle" aria-expanded="false">
-            <span class="collapsible-chevron" aria-hidden="true"></span>
-            <h2>Cosmetics test (temporary)</h2>
-          </button>
-        </div>
-        <div class="collapsible-body">
-          <p class="muted">Preview frame tiers. Frames still use this panel; badges now come from quests, levels, and raids.</p>
-          <div class="form-group">
-            <label for="frame-tier-slider">
-              Frame tier
-              <span id="frame-tier-readout" class="tier-readout">0 — Plain</span>
-            </label>
-            <input type="range" id="frame-tier-slider" min="0" max="9" step="1" value="0" />
-          </div>
-          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem">
-            <button type="button" id="frame-tier-apply" class="btn btn-primary btn-sm">Apply frame</button>
-            <button type="button" id="cosmetics-reset" class="btn btn-secondary btn-sm">Reset frame</button>
-          </div>
-        </div>
-      </section>
     </main>
 
     <div id="toast" class="toast hidden" role="status"></div>
@@ -144,12 +121,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js?v=13"></script>
-    <script src="js/levels.js?v=25"></script>
-    <script src="js/cosmetics.js?v=34"></script>
+    <script src="js/levels.js?v=26"></script>
+    <script src="js/cosmetics.js?v=35"></script>
     <script src="js/auth.js?v=27"></script>
     <script src="js/quest-catalog.js?v=36"></script>
-    <script src="js/db.js?v=36"></script>
+    <script src="js/db.js?v=37"></script>
     <script src="js/collapse.js?v=26"></script>
-    <script src="js/student-dashboard.js?v=36"></script>
+    <script src="js/student-dashboard.js?v=40"></script>
   </body>
 </html>

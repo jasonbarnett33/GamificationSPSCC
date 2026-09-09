@@ -590,6 +590,17 @@ tr:hover td {
   font-weight: 600;
 }
 
+.level-up-keys {
+  margin: 0.25rem 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  color: #fde68a;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
 .toast {
   position: fixed;
   bottom: 1.25rem;

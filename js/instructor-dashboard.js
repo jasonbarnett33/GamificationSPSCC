@@ -3,6 +3,7 @@ let rosterStudents = [];
 let loadedRaids = [];
 let raidParticipations = [];
 let raidAwards = [];
+let leaderboardRefresh = null;
 
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
@@ -30,9 +31,135 @@ function formatDate(timestamp) {
   return timestamp.toDate().toLocaleString();
 }
 
+function signedUpCount(classId) {
+  return rosterStudents.filter((s) => s.classId === classId).length;
+}
+
+function renderClasses() {
+  const tbody = document.getElementById('classes-body');
+  if (!tbody) return;
+  if (!CLASS_OPTIONS.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No classes yet. Add one to get started.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = CLASS_OPTIONS.map((cls) => {
+    const signedUp = signedUpCount(cls.id);
+    return `
+      <tr>
+        <td><strong>${escapeHtml(cls.name)}</strong></td>
+        <td><code>${escapeHtml(cls.id)}</code></td>
+        <td>${cls.rosterSize}</td>
+        <td>${signedUp}</td>
+        <td>
+          <div class="row-actions">
+            <button type="button" class="btn btn-secondary btn-sm edit-class-btn" data-id="${escapeHtml(cls.id)}">Edit</button>
+            <button type="button" class="btn btn-danger btn-sm delete-class-btn" data-id="${escapeHtml(cls.id)}">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.edit-class-btn').forEach((btn) => {
+    btn.addEventListener('click', () => openClassModal(btn.dataset.id));
+  });
+  tbody.querySelectorAll('.delete-class-btn').forEach((btn) => {
+    btn.addEventListener('click', () => handleDeleteClass(btn.dataset.id));
+  });
+}
+
+function refreshClassSelects() {
+  const studentSelect = document.getElementById('student-class-id');
+  if (studentSelect && !document.getElementById('student-modal')?.classList.contains('hidden')) {
+    fillClassSelect(studentSelect, studentSelect.value, !studentSelect.value);
+  }
+  const boardFilter = document.getElementById('leaderboard-class-filter');
+  if (boardFilter) {
+    const current = boardFilter.value || CLASS_OPTIONS[0]?.id || '';
+    fillClassSelect(boardFilter, current, false);
+  }
+  if (typeof leaderboardRefresh === 'function') leaderboardRefresh();
+}
+
+const classModal = document.getElementById('class-modal');
+const classForm = document.getElementById('class-form');
+
+function openClassModal(classId = '') {
+  const existing = CLASS_OPTIONS.find((c) => c.id === classId);
+  const isNew = !existing;
+  document.getElementById('class-modal-title').textContent = isNew ? 'Add class' : 'Edit class';
+  document.getElementById('class-editing-id').value = existing?.id || '';
+  const idInput = document.getElementById('class-id-input');
+  const idGroup = document.getElementById('class-id-group');
+  idInput.value = existing?.id || '';
+  idInput.disabled = !isNew;
+  idGroup.classList.toggle('hidden', !isNew);
+  document.getElementById('class-name-input').value = existing?.name || '';
+  document.getElementById('class-roster-size').value = existing?.rosterSize ?? 20;
+  document.getElementById('class-sort-order').value =
+    existing?.sortOrder ?? CLASS_OPTIONS.length;
+  classModal.classList.remove('hidden');
+}
+
+function closeClassModal() {
+  classModal.classList.add('hidden');
+}
+
+async function handleDeleteClass(classId) {
+  const cls = CLASS_OPTIONS.find((c) => c.id === classId);
+  const label = cls?.name || classId;
+  const signedUp = signedUpCount(classId);
+  if (signedUp > 0) {
+    showToast(`Cannot delete "${label}" while ${signedUp} student(s) are enrolled.`, 'error');
+    return;
+  }
+  if (!window.confirm(`Delete class "${label}"? This cannot be undone.`)) return;
+  try {
+    await deleteClass(classId);
+    renderClasses();
+    refreshClassSelects();
+    renderRaidProgress();
+    showToast('Class deleted.');
+  } catch (err) {
+    showToast(err.message || 'Could not delete class.', 'error');
+  }
+}
+
+document.getElementById('add-class-btn')?.addEventListener('click', () => openClassModal(''));
+document.getElementById('cancel-class')?.addEventListener('click', closeClassModal);
+classModal?.addEventListener('click', (e) => {
+  if (e.target === classModal) closeClassModal();
+});
+
+classForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const editingId = document.getElementById('class-editing-id').value;
+  const isNew = !editingId;
+  const name = document.getElementById('class-name-input').value;
+  try {
+    await saveClass(
+      {
+        id: isNew ? document.getElementById('class-id-input').value.trim() || suggestClassId(name) : editingId,
+        name,
+        rosterSize: document.getElementById('class-roster-size').value,
+        sortOrder: document.getElementById('class-sort-order').value,
+      },
+      { isNew }
+    );
+    closeClassModal();
+    renderClasses();
+    refreshClassSelects();
+    renderRaidProgress();
+    showToast(isNew ? 'Class added.' : 'Class saved.');
+  } catch (err) {
+    showToast(err.message || 'Could not save class.', 'error');
+  }
+});
+
 function renderStudents(students) {
   rosterStudents = students;
   studentsById = Object.fromEntries(students.map((s) => [s.id, s]));
+  renderClasses();
   const tbody = document.getElementById('students-body');
 
   if (!students.length) {
@@ -898,7 +1025,15 @@ async function init(user) {
 
   classTab.addEventListener('click', () => showView('class'));
   boardTab.addEventListener('click', () => showView('leaderboard'));
-  startLeaderboard(session.profile);
+
+  await ensureClassesLoaded();
+  renderClasses();
+  leaderboardRefresh = startLeaderboard(session.profile);
+  subscribeClasses(() => {
+    renderClasses();
+    refreshClassSelects();
+    renderRaidProgress();
+  });
 
   document.getElementById('seed-test-students-btn').addEventListener('click', async () => {
     const btn = document.getElementById('seed-test-students-btn');

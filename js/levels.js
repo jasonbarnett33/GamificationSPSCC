@@ -162,14 +162,50 @@ function rewardProgressFromXp(profile, afterXp) {
   };
 }
 
-const CLASS_OPTIONS = [
-  { id: 'math142', name: 'Math& 142 Precalc 2' },
-  { id: 'math151', name: 'Math& 151 Calc 1' },
-  { id: 'math238', name: 'Math 238 Differential Equations' },
+const DEFAULT_CLASS_OPTIONS = [
+  { id: 'math142', name: 'Math& 142 Precalc 2', rosterSize: 20 },
+  { id: 'math151', name: 'Math& 151 Calc 1', rosterSize: 30 },
+  { id: 'math238', name: 'Math 238 Differential Equations', rosterSize: 20 },
 ];
+
+/** Live class list (seeded defaults, then replaced from Firestore). */
+let CLASS_OPTIONS = DEFAULT_CLASS_OPTIONS.map((c) => ({ ...c }));
+
+function normalizeClassRecord(id, data = {}) {
+  const rosterRaw = Number(data.rosterSize);
+  const rosterSize = Number.isFinite(rosterRaw) && rosterRaw > 0 ? Math.round(rosterRaw) : 20;
+  const sortRaw = Number(data.sortOrder);
+  return {
+    id: String(id || data.id || '').trim(),
+    name: String(data.name || id || 'Class').trim() || 'Class',
+    rosterSize,
+    sortOrder: Number.isFinite(sortRaw) ? sortRaw : 0,
+  };
+}
+
+function setClassOptions(list) {
+  const normalized = (list || [])
+    .map((c) => normalizeClassRecord(c.id, c))
+    .filter((c) => c.id)
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+  CLASS_OPTIONS = normalized.length ? normalized : DEFAULT_CLASS_OPTIONS.map((c) => ({ ...c }));
+  return CLASS_OPTIONS;
+}
 
 function classLabel(classId) {
   return CLASS_OPTIONS.find((c) => c.id === classId)?.name || 'Unassigned';
+}
+
+function classRosterSize(classId) {
+  const found = CLASS_OPTIONS.find((c) => c.id === classId);
+  const size = Number(found?.rosterSize);
+  return Number.isFinite(size) && size > 0 ? size : 20;
+}
+
+/** Total XP ÷ configured roster size (not signup count). */
+function scaledClassXp(totalXp, classId) {
+  const size = classRosterSize(classId);
+  return Math.round((Number(totalXp) || 0) / size);
 }
 
 function fillClassSelect(selectEl, selectedId, includeBlank = true) {
@@ -181,4 +217,12 @@ function fillClassSelect(selectEl, selectedId, includeBlank = true) {
       const selected = c.id === selectedId ? ' selected' : '';
       return `<option value="${c.id}"${selected}>${c.name}</option>`;
     }).join('');
+}
+
+function suggestClassId(name) {
+  const base = String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '')
+    .slice(0, 24);
+  return base || `class${Date.now().toString(36)}`;
 }

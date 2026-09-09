@@ -156,6 +156,7 @@
   border-radius: var(--radius);
   padding: 0.75rem 0.85rem;
   background: var(--surface);
+  box-sizing: border-box;
 }
 
 .leaderboard-row-grid {
@@ -177,6 +178,16 @@
     padding-bottom: 1rem;
   }
 
+  .leaderboard-rows {
+    align-items: flex-start;
+  }
+
+  .leaderboard-ranked-header,
+  .leaderboard-row-card {
+    width: max-content;
+    min-width: 100%;
+  }
+
   .leaderboard-ranked-header,
   .leaderboard-row-grid {
     min-width: 34rem;
@@ -187,19 +198,4 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-}
-
-.test-panel {
-  border: 2px dashed var(--border);
-  background: var(--surface-2);
-}
-
-.test-panel h2 {
-  font-size: 0.95rem;
-  color: var(--warning);
-}
-
-.test-panel .tier-readout {
-  font-weight: 600;
-  margin-left: 0.5rem;
 }

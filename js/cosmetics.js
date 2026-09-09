@@ -149,6 +149,13 @@ function badgeGainSummary(gains) {
     .join(', ');
 }
 
+function escapeAttr(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
 function badgeLabel(type, tier) {
   const status = `${type.name} — ${badgeTierName(tier)}`;
   return type.how ? `${status}. ${type.how}` : status;
@@ -163,7 +170,84 @@ function renderBadge(type, tier) {
     earned ? `badge-tier-${normalized}` : 'badge-unearned',
   ].join(' ');
   const label = badgeLabel(type, normalized);
-  return `<span class="${classes}" title="${label}" aria-label="${label}">${type.icon}</span>`;
+  const status = `${type.name} — ${badgeTierName(normalized)}`;
+  return `<button type="button" class="${classes}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}" aria-expanded="false" data-badge-name="${escapeAttr(status)}" data-badge-how="${escapeAttr(type.how || '')}">${type.icon}</button>`;
+}
+
+function hideBadgeTip() {
+  const tip = document.getElementById('badge-tip');
+  if (tip) tip.classList.add('hidden');
+  document.querySelectorAll('.badge[aria-expanded="true"]').forEach((el) => {
+    el.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function positionBadgeTip(badge, tip) {
+  const rect = badge.getBoundingClientRect();
+  const margin = 8;
+  tip.classList.remove('hidden');
+  const tipRect = tip.getBoundingClientRect();
+  let left = rect.left + rect.width / 2 - tipRect.width / 2;
+  let top = rect.bottom + margin;
+  left = Math.max(margin, Math.min(left, window.innerWidth - tipRect.width - margin));
+  if (top + tipRect.height > window.innerHeight - margin) {
+    top = rect.top - tipRect.height - margin;
+  }
+  tip.style.left = `${Math.round(left)}px`;
+  tip.style.top = `${Math.round(Math.max(margin, top))}px`;
+}
+
+function showBadgeTip(badge) {
+  let tip = document.getElementById('badge-tip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'badge-tip';
+    tip.className = 'badge-tip hidden';
+    tip.setAttribute('role', 'tooltip');
+    document.body.appendChild(tip);
+  }
+
+  const alreadyOpen = badge.getAttribute('aria-expanded') === 'true';
+  hideBadgeTip();
+  if (alreadyOpen) return;
+
+  const name = badge.getAttribute('data-badge-name') || badge.getAttribute('aria-label') || '';
+  const how = badge.getAttribute('data-badge-how') || '';
+  tip.innerHTML = `<strong class="badge-tip-name">${escapeAttr(name)}</strong>${
+    how ? `<span class="badge-tip-how">${escapeAttr(how)}</span>` : ''
+  }`;
+  badge.setAttribute('aria-expanded', 'true');
+  positionBadgeTip(badge, tip);
+}
+
+function setupBadgeTips() {
+  if (document.documentElement.dataset.badgeTipsBound === '1') return;
+  document.documentElement.dataset.badgeTipsBound = '1';
+
+  document.addEventListener('click', (event) => {
+    const badge = event.target.closest('.badge');
+    if (badge) {
+      showBadgeTip(badge);
+      return;
+    }
+    hideBadgeTip();
+  });
+
+  document.addEventListener(
+    'scroll',
+    () => {
+      hideBadgeTip();
+    },
+    true
+  );
+
+  window.addEventListener('resize', hideBadgeTip);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupBadgeTips);
+} else {
+  setupBadgeTips();
 }
 
 function renderBadgeRow(badges, extraClass = '') {

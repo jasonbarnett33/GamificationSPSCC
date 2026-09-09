@@ -2113,3 +2113,131 @@ async function fulfillRewardPool(rewardId, poolSize) {
   await batch.commit();
   return needed;
 }
+
+function classesFromSnapshot(snap) {
+  return snap.docs.map((d) => normalizeClassRecord(d.id, d.data()));
+}
+
+async function getAllClasses() {
+  const snap = await db.collection('classes').get();
+  return setClassOptions(classesFromSnapshot(snap));
+}
+
+async function ensureClassesSeeded() {
+  const snap = await db.collection('classes').get();
+  if (!snap.empty) {
+    return setClassOptions(classesFromSnapshot(snap));
+  }
+  const batch = db.batch();
+  DEFAULT_CLASS_OPTIONS.forEach((cls, index) => {
+    batch.set(db.collection('classes').doc(cls.id), {
+      name: cls.name,
+      rosterSize: cls.rosterSize,
+      sortOrder: index,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+  await batch.commit();
+  return setClassOptions(DEFAULT_CLASS_OPTIONS.map((c) => ({ ...c, sortOrder: DEFAULT_CLASS_OPTIONS.indexOf(c) })));
+}
+
+async function ensureClassesLoaded() {
+  try {
+    return await ensureClassesSeeded();
+  } catch (err) {
+    console.error('Could not load classes from Firestore; using defaults.', err);
+    return setClassOptions(DEFAULT_CLASS_OPTIONS);
+  }
+}
+
+function subscribeClasses(callback) {
+  return db.collection('classes').onSnapshot(
+    (snap) => {
+      if (snap.empty) {
+        ensureClassesSeeded()
+          .then((list) => callback(list))
+          .catch((err) => {
+            console.error('Class seed error:', err);
+            callback(setClassOptions(DEFAULT_CLASS_OPTIONS));
+          });
+        return;
+      }
+      callback(setClassOptions(classesFromSnapshot(snap)));
+    },
+    (err) => {
+      console.error('Classes subscription error:', err);
+      callback(setClassOptions(DEFAULT_CLASS_OPTIONS));
+    }
+  );
+}
+
+async function saveClass({ id, name, rosterSize, sortOrder }, { isNew = false } = {}) {
+  const trimmedName = String(name || '').trim();
+  if (!trimmedName) {
+    throw new Error('Class name is required.');
+  }
+  let classId = String(id || '').trim();
+  if (isNew) {
+    if (!classId) classId = suggestClassId(trimmedName);
+    if (!/^[a-zA-Z0-9_-]+$/.test(classId)) {
+      throw new Error('Class ID can only use letters, numbers, hyphens, and underscores.');
+    }
+    const existing = await db.collection('classes').doc(classId).get();
+    if (existing.exists) {
+      throw new Error('That class ID already exists. Choose a different ID.');
+    }
+  } else if (!classId) {
+    throw new Error('Missing class ID.');
+  }
+
+  const size = Math.max(1, Math.round(Number(rosterSize) || 20));
+  const order = Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : CLASS_OPTIONS.length;
+  const payload = {
+    name: trimmedName,
+    rosterSize: size,
+    sortOrder: order,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+  if (isNew) {
+    payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+  }
+
+  await db.collection('classes').doc(classId).set(payload, { merge: true });
+
+  // Keep stored className labels in sync when renaming.
+  if (!isNew) {
+    const [usersSnap, publicSnap] = await Promise.all([
+      db.collection('users').where('classId', '==', classId).get(),
+      db.collection('publicProfiles').where('classId', '==', classId).get(),
+    ]);
+    const batch = db.batch();
+    let writes = 0;
+    usersSnap.docs.forEach((doc) => {
+      batch.set(doc.ref, { className: trimmedName, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      writes++;
+    });
+    publicSnap.docs.forEach((doc) => {
+      batch.set(doc.ref, { className: trimmedName, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      writes++;
+    });
+    if (writes) await batch.commit();
+  }
+
+  await getAllClasses();
+  return classId;
+}
+
+async function deleteClass(classId) {
+  const id = String(classId || '').trim();
+  if (!id) throw new Error('Missing class ID.');
+
+  const enrolled = await db.collection('users').where('classId', '==', id).limit(1).get();
+  if (!enrolled.empty) {
+    throw new Error('Cannot delete a class that still has students. Reassign or delete those students first.');
+  }
+
+  await db.collection('classes').doc(id).delete();
+  await getAllClasses();
+}
+

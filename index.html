@@ -4,15 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login — Class Quest</title>
-    <link rel="stylesheet" href="css/styles.css?v=27" />
+    <!-- Fallback if styles.css fails to load (deploy/path issues) -->
+    <style>
+      .hidden { display: none !important; }
+      body { font-family: system-ui, sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; }
+      .login-screen { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center; }
+      .asset-error { max-width: 28rem; margin: 1rem auto; padding: 1rem; background: #7f1d1d; border-radius: 8px; color: #fecaca; text-align: left; }
+    </style>
+    <link rel="stylesheet" href="css/styles.css?v=30" />
   </head>
   <body>
+    <div id="asset-error" class="asset-error hidden" role="alert"></div>
+
     <div id="login-view" class="login-screen">
       <div class="logo" aria-hidden="true">⚔️</div>
       <h1>Class Quest</h1>
-      <p>Sign in with your Google account to join your class gamification adventure.</p>
+      <p>Sign in with your SPSCC or Google account to join your class gamification adventure.</p>
       <button type="button" id="google-sign-in" class="btn btn-google">
-        Sign in with Google
+        Sign in with SPSCC or Google
       </button>
       <p id="login-error" class="muted hidden" style="margin-top: 1rem; color: var(--danger)"></p>
     </div>
@@ -63,21 +72,45 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=13"></script>
-    <script src="js/levels.js?v=25"></script>
-    <script src="js/cosmetics.js?v=20"></script>
-    <script src="js/auth.js?v=27"></script>
+    <script src="js/firebase-config.js?v=14"></script>
+    <script src="js/levels.js?v=26"></script>
+    <script src="js/cosmetics.js?v=35"></script>
+    <script src="js/auth.js?v=28"></script>
+    <script src="js/db.js?v=37"></script>
     <script>
       const loginView = document.getElementById('login-view');
       const loadingView = document.getElementById('loading-view');
       const onboardingView = document.getElementById('onboarding-view');
       const loginError = document.getElementById('login-error');
       const onboardingError = document.getElementById('onboarding-error');
+      const assetError = document.getElementById('asset-error');
 
       function showError(el, message) {
         el.textContent = message;
         el.classList.remove('hidden');
       }
+
+      function showAssetError(message) {
+        assetError.innerHTML = message;
+        assetError.classList.remove('hidden');
+      }
+
+      // Detect missing deploy files (common cause of white/unstyled page + signInWithGoogle errors)
+      (function checkAssets() {
+        const missing = [];
+        if (typeof FIREBASE_CONFIG === 'undefined') missing.push('<code>js/firebase-config.js</code>');
+        if (typeof fillClassSelect !== 'function') missing.push('<code>js/levels.js</code>');
+        if (typeof signInWithGoogle !== 'function') missing.push('<code>js/auth.js</code>');
+        if (typeof firebase === 'undefined') missing.push('Firebase SDK (network blocked?)');
+        if (missing.length) {
+          showAssetError(
+            '<strong>Site files failed to load.</strong><br><br>Missing or broken: ' +
+              missing.join(', ') +
+              '.<br><br>Open this page via your local server or Vercel URL (not by double‑clicking the HTML file). ' +
+              'If this is the live site, make sure the <code>css</code> and <code>js</code> folders were uploaded, including <code>firebase-config.js</code>.'
+          );
+        }
+      })();
 
       function showLoading() {
         loginView.classList.add('hidden');
@@ -93,6 +126,13 @@
 
       document.getElementById('google-sign-in').addEventListener('click', async () => {
         loginError.classList.add('hidden');
+        if (typeof signInWithGoogle !== 'function') {
+          showError(
+            loginError,
+            'Login script did not load. Check that js/auth.js and js/firebase-config.js are on the server, then hard refresh (Ctrl+Shift+R).'
+          );
+          return;
+        }
         try {
           await signInWithGoogle();
         } catch (err) {
@@ -108,7 +148,7 @@
         if (!user) return;
 
         if (!document.getElementById('privacy-agree').checked) {
-          showError(onboardingError, 'Please agree to the privacy statement to continue.');
+          showError(onboardingError, 'Please agree to the privacy statement above.');
           return;
         }
 
@@ -154,6 +194,11 @@
           loadingView.classList.add('hidden');
           loginView.classList.add('hidden');
           onboardingView.classList.remove('hidden');
+          try {
+            await ensureClassesLoaded();
+          } catch (err) {
+            console.warn('Class list load failed; using defaults.', err);
+          }
           fillClassSelect(document.getElementById('class-id'), profile?.classId);
           if (isInstructorEmail(user.email)) {
             document.getElementById('class-group').classList.add('hidden');
@@ -173,7 +218,9 @@
         }
       }
 
-      onAuthReady((user) => finishSignIn(user));
+      if (typeof onAuthReady === 'function') {
+        onAuthReady((user) => finishSignIn(user));
+      }
     </script>
   </body>
 </html>

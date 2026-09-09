@@ -82,6 +82,11 @@ service cloud.firestore {
       allow write: if isInstructor();
     }
 
+    match /classes/{classId} {
+      allow read: if isSignedIn();
+      allow write: if isInstructor();
+    }
+
     match /rewards/{rewardId} {
       allow read: if isSignedIn();
       allow write: if isInstructor();

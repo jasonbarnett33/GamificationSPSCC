@@ -50,8 +50,11 @@ function renderClassTotals(students) {
   const totals = CLASS_OPTIONS.map((course) => {
     const members = students.filter((s) => s.classId === course.id);
     const xp = members.reduce((sum, s) => sum + totalXp(s), 0);
-    return { ...course, xp, count: members.length };
-  }).sort((a, b) => b.xp - a.xp);
+    const signedUp = members.length;
+    const rosterSize = classRosterSize(course.id);
+    const scaledXp = scaledClassXp(xp, course.id);
+    return { ...course, xp, signedUp, rosterSize, scaledXp };
+  }).sort((a, b) => b.scaledXp - a.scaledXp || b.xp - a.xp);
 
   tbody.innerHTML = totals
     .map((row, index) => {
@@ -61,7 +64,9 @@ function renderClassTotals(students) {
         <tr>
           <td class="${rankClass}">${rank}</td>
           <td><strong>${escapeHtml(row.name)}</strong></td>
+          <td>${row.signedUp} / ${row.rosterSize}</td>
           <td>${row.xp}</td>
+          <td><strong>${row.scaledXp}</strong></td>
         </tr>
       `;
     })
@@ -71,7 +76,7 @@ function renderClassTotals(students) {
 function startLeaderboard(viewerProfile) {
   let selectedClassId =
     viewerProfile?.role === 'instructor'
-      ? CLASS_OPTIONS[0].id
+      ? CLASS_OPTIONS[0]?.id || ''
       : viewerProfile?.classId || '';
   let latestStudents = [];
 
@@ -84,16 +89,30 @@ function startLeaderboard(viewerProfile) {
     });
   }
 
-  return subscribeStudents((students) => {
+  function refresh() {
+    if (filter) {
+      if (!CLASS_OPTIONS.some((c) => c.id === selectedClassId)) {
+        selectedClassId = CLASS_OPTIONS[0]?.id || '';
+      }
+      fillClassSelect(filter, selectedClassId, false);
+    }
+    renderClassTotals(latestStudents);
+    renderLeaderboard(latestStudents.filter((s) => s.classId === selectedClassId));
+  }
+
+  subscribeStudents((students) => {
     latestStudents = students;
-    renderClassTotals(students);
-    renderLeaderboard(students.filter((s) => s.classId === selectedClassId));
+    refresh();
   });
+
+  return refresh;
 }
 
 async function initLeaderboardPage(user) {
   const session = await requireAuth({ allowedRoles: ['student', 'instructor'], user });
   if (!session) return;
+
+  await ensureClassesLoaded();
 
   const dashboardLink = document.getElementById('dashboard-link');
   if (dashboardLink) {
@@ -102,7 +121,8 @@ async function initLeaderboardPage(user) {
   }
 
   document.getElementById('sign-out')?.addEventListener('click', () => signOutUser());
-  startLeaderboard(session.profile);
+  const refresh = startLeaderboard(session.profile);
+  subscribeClasses(() => refresh());
 }
 
 if (document.body?.dataset.page === 'leaderboard') {

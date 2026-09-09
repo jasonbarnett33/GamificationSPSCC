@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Instructor Dashboard — Class Quest</title>
-    <link rel="stylesheet" href="css/styles.css?v=31" />
-    <link rel="stylesheet" href="css/frames.css?v=20" />
-    <link rel="stylesheet" href="css/badges.css?v=34" />
+    <link rel="stylesheet" href="css/styles.css?v=32" />
+    <link rel="stylesheet" href="css/frames.css?v=22" />
+    <link rel="stylesheet" href="css/badges.css?v=36" />
   </head>
   <body>
     <header class="app-header">
@@ -22,6 +22,37 @@
     </header>
 
     <main id="view-class" class="wide">
+      <section class="card collapsible-card" data-collapse-key="instructor-classes">
+        <div class="collapsible-header">
+          <button type="button" class="collapsible-toggle" aria-expanded="true">
+            <span class="collapsible-chevron" aria-hidden="true"></span>
+            <h2>Classes</h2>
+          </button>
+          <div class="collapsible-actions">
+            <button type="button" id="add-class-btn" class="btn btn-primary btn-sm">Add class</button>
+          </div>
+        </div>
+        <div class="collapsible-body">
+          <p class="muted">Edit names and roster sizes for future quarters. Scaled XP on the leaderboard uses roster size (not signup count).</p>
+          <div class="leaderboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>ID</th>
+                  <th>Roster size</th>
+                  <th>Signed up</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="classes-body">
+                <tr><td colspan="5" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <section class="card collapsible-card" data-collapse-key="instructor-students">
         <div class="collapsible-header">
           <button type="button" class="collapsible-toggle" aria-expanded="true">
@@ -237,18 +268,20 @@
           </button>
         </div>
         <div class="collapsible-body">
-          <p class="muted">Combined XP for each class. Same board students see.</p>
+          <p class="muted">Total XP and scaled XP (total ÷ configured class size) so larger classes don’t automatically win. Ranked by scaled XP. Same board students see.</p>
           <div class="leaderboard-table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>#</th>
                   <th>Class</th>
+                  <th>Signed up / Size</th>
                   <th>Total XP</th>
+                  <th>Scaled XP</th>
                 </tr>
               </thead>
               <tbody id="class-totals-body">
-                <tr><td colspan="3" class="loading">Loading…</td></tr>
+                <tr><td colspan="5" class="loading">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -363,6 +396,39 @@
           <div class="modal-actions">
             <button type="button" id="cancel-quest" class="btn btn-secondary">Cancel</button>
             <button type="submit" class="btn btn-primary">Save quest</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="class-modal" class="modal-backdrop hidden">
+      <div class="modal" role="dialog" aria-labelledby="class-modal-title">
+        <h2 id="class-modal-title">Edit class</h2>
+        <form id="class-form">
+          <input type="hidden" id="class-editing-id" />
+          <div class="form-group" id="class-id-group">
+            <label for="class-id-input">Class ID</label>
+            <input type="text" id="class-id-input" placeholder="math142" autocomplete="off" />
+            <p class="muted form-hint">Short code used in the database. Letters, numbers, hyphens, underscores. Can’t change after create.</p>
+          </div>
+          <div class="form-group">
+            <label for="class-name-input">Display name</label>
+            <input type="text" id="class-name-input" required placeholder="Math& 142 Precalc 2" />
+          </div>
+          <div class="form-row two">
+            <div class="form-group">
+              <label for="class-roster-size">Roster size</label>
+              <input type="number" id="class-roster-size" min="1" value="20" required />
+              <p class="muted form-hint">Used for Scaled XP (total XP ÷ this number).</p>
+            </div>
+            <div class="form-group">
+              <label for="class-sort-order">Sort order</label>
+              <input type="number" id="class-sort-order" value="0" />
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" id="cancel-class" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save class</button>
           </div>
         </form>
       </div>
@@ -516,13 +582,13 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js?v=13"></script>
-    <script src="js/levels.js?v=25"></script>
-    <script src="js/cosmetics.js?v=34"></script>
+    <script src="js/levels.js?v=26"></script>
+    <script src="js/cosmetics.js?v=35"></script>
     <script src="js/auth.js?v=27"></script>
     <script src="js/quest-catalog.js?v=36"></script>
-    <script src="js/db.js?v=36"></script>
-    <script src="js/leaderboard.js?v=20"></script>
+    <script src="js/db.js?v=37"></script>
+    <script src="js/leaderboard.js?v=22"></script>
     <script src="js/collapse.js?v=26"></script>
-    <script src="js/instructor-dashboard.js?v=36"></script>
+    <script src="js/instructor-dashboard.js?v=37"></script>
   </body>
 </html>

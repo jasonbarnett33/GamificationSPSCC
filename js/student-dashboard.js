@@ -34,6 +34,7 @@ function applyProfileBadges(profile) {
   mount.innerHTML = `
     <p class="badge-row-label">Badges</p>
     ${renderBadgeRow(profile?.badges)}
+    <p class="badge-row-hint muted">Tap a badge to see what it is and how to earn it.</p>
   `;
 }
 
@@ -240,11 +241,6 @@ async function handleClaimReward() {
     classmateOptions = [];
     currentProfile = await getUserProfile(currentUser.uid);
     applyProfileCosmetics(currentProfile);
-    const slider = document.getElementById('frame-tier-slider');
-    if (slider) {
-      slider.value = String(normalizeFrameTier(currentProfile.frameTier));
-      updateFrameTierReadout(currentProfile.frameTier);
-    }
     await renderProgressRewards(currentProfile);
     await refreshRedeemedRewards();
     if (reward.automatedType === 'upgradeFrame') {
@@ -264,57 +260,6 @@ async function handleClaimReward() {
     if (btn) btn.disabled = false;
     showToast(err.message || 'Could not claim that reward.', 'error');
   }
-}
-
-function updateFrameTierReadout(tier) {
-  const readout = document.getElementById('frame-tier-readout');
-  if (readout) readout.textContent = `${normalizeFrameTier(tier)} — ${frameTierName(tier)}`;
-}
-
-function previewCosmeticsFromPanel() {
-  const slider = document.getElementById('frame-tier-slider');
-  applyFrameTier(document.getElementById('progress-section'), slider?.value ?? 0);
-}
-
-function setupCosmeticsTestPanel() {
-  const slider = document.getElementById('frame-tier-slider');
-  const progress = document.getElementById('progress-section');
-  if (!slider || !progress) return;
-
-  const currentTier = normalizeFrameTier(currentProfile?.frameTier);
-  slider.value = String(currentTier);
-  updateFrameTierReadout(currentTier);
-
-  slider.addEventListener('input', () => {
-    const tier = normalizeFrameTier(slider.value);
-    updateFrameTierReadout(tier);
-    previewCosmeticsFromPanel();
-  });
-
-  document.getElementById('frame-tier-apply').addEventListener('click', async () => {
-    const tier = normalizeFrameTier(slider.value);
-    try {
-      await saveStudentCosmetics(currentUser.uid, { frameTier: tier });
-      currentProfile = await getUserProfile(currentUser.uid);
-      applyProfileCosmetics(currentProfile);
-      showToast(`Frame set to ${frameTierName(tier)}.`);
-    } catch (err) {
-      showToast(err.message || 'Could not save frame.', 'error');
-    }
-  });
-
-  document.getElementById('cosmetics-reset')?.addEventListener('click', async () => {
-    try {
-      await saveStudentCosmetics(currentUser.uid, { frameTier: 0 });
-      currentProfile = await getUserProfile(currentUser.uid);
-      slider.value = '0';
-      updateFrameTierReadout(0);
-      applyProfileCosmetics(currentProfile);
-      showToast('Frame reset.');
-    } catch (err) {
-      showToast(err.message || 'Could not reset frame.', 'error');
-    }
-  });
 }
 
 function toastBadgeGains(gains) {
@@ -337,18 +282,29 @@ function showLevelUp(gains, keysGained = 0) {
   const keysEl = document.getElementById('level-up-keys');
   if (keysEl) {
     if (keysGained > 0) {
-      keysEl.textContent =
+      const keyWord = keysGained === 1 ? 'key' : 'keys';
+      keysEl.innerHTML =
         keysGained === 1
-          ? 'You earned a key. Open a chest in Your progress.'
-          : `You earned ${keysGained} keys. Open chests in Your progress.`;
+          ? '<strong>You got a reward key!</strong> Open a chest under <strong>Your progress → Rewards</strong> to spend it.'
+          : `<strong>You got ${keysGained} reward keys!</strong> Open chests under <strong>Your progress → Rewards</strong> to spend them.`;
       keysEl.classList.remove('hidden');
+      keysEl.setAttribute('aria-label', `You got ${keysGained} ${keyWord}. Open chests under Your progress Rewards.`);
     } else {
       keysEl.textContent = '';
       keysEl.classList.add('hidden');
+      keysEl.removeAttribute('aria-label');
     }
   }
   if (!banner || !list) {
-    showToast('Level up! ' + gains.map((g) => `${XP_TREE_LABELS[g.tree]} ${g.from} → ${g.to}`).join(', '));
+    const keyNote =
+      keysGained > 0
+        ? keysGained === 1
+          ? ' You got a reward key — open a chest in Your progress.'
+          : ` You got ${keysGained} reward keys — open chests in Your progress.`
+        : '';
+    showToast(
+      'Level up! ' + gains.map((g) => `${XP_TREE_LABELS[g.tree]} ${g.from} → ${g.to}`).join(', ') + keyNote
+    );
     return;
   }
   list.innerHTML = gains
@@ -822,6 +778,8 @@ async function init(user) {
   currentUser = session.user;
   currentProfile = session.profile;
 
+  await ensureClassesLoaded();
+
   const displayName = currentProfile.characterName || 'Adventurer';
   document.getElementById('welcome-text').textContent = `Playing as ${displayName}`;
 
@@ -835,7 +793,6 @@ async function init(user) {
 
   renderXpGrid(currentProfile);
   applyProfileCosmetics(currentProfile);
-  setupCosmeticsTestPanel();
 
   try {
     const beforeKeys = Math.max(0, Number(currentProfile.rewardKeys) || 0);
