@@ -248,7 +248,7 @@ function rewardFlagLabels(reward) {
   }
   if (reward.requiresText) flags.push('Text');
   const pool = rewardPoolSize(reward);
-  if (pool) flags.push(`Pool ${pool}`);
+  if (pool) flags.push(`Pool ${pool} / class`);
   const boostXp = Number(reward.automatedXp);
   if (reward.automatedType === 'addXpToClassmate' && boostXp) flags.push(`+${boostXp} XP`);
   return flags.join(' · ');
@@ -1475,7 +1475,7 @@ const REWARD_CATALOG = [
   {
     id: 'extra-dropped-hw',
     name: 'Extra dropped HW score',
-    description: 'An extra homework score is dropped. Needs 5 redemptions before Jason fulfills it.',
+    description: 'An extra homework score is dropped. Needs 5 redemptions from this class before Jason fulfills it.',
     requiresText: false,
     textPrompt: '',
     automated: false,
@@ -1585,7 +1585,7 @@ const REWARD_CATALOG = [
   {
     id: 'class-quiz-hint',
     name: 'Unlock a hint for the next quiz for the whole class',
-    description: 'The whole class gets a hint on the next quiz. Needs 3 redemptions before Jason fulfills it.',
+    description: 'The whole class gets a hint on the next quiz. Needs 3 redemptions from this class before Jason fulfills it.',
     requiresText: false,
     textPrompt: '',
     automated: false,
@@ -1651,6 +1651,14 @@ function rewardPoolSize(reward) {
   const n = Number(reward?.poolSize);
   if (!Number.isFinite(n) || n <= 1) return 0;
   return Math.floor(n);
+}
+
+function redemptionClassId(redemption) {
+  return String(redemption?.classId || '').trim();
+}
+
+function rewardPoolBucketKey(rewardId, classId) {
+  return `${String(rewardId || '').trim()}::${String(classId || '').trim()}`;
 }
 
 function rewardCatalogPayload(spec) {
@@ -2130,15 +2138,17 @@ async function fulfillRedemption(redemptionId) {
   );
 }
 
-async function fulfillRewardPool(rewardId, poolSize) {
+async function fulfillRewardPool(rewardId, poolSize, classId) {
   const needed = Math.max(2, Number(poolSize) || 0);
+  const classKey = String(classId || '').trim();
   const snap = await db.collection('redemptions').where('rewardId', '==', rewardId).get();
   const pending = snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
-    .filter((r) => r.status === 'pending')
+    .filter((r) => r.status === 'pending' && redemptionClassId(r) === classKey)
     .sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
   if (pending.length < needed) {
-    throw new Error(`Need ${needed} redemptions first (${pending.length} so far).`);
+    const label = classLabel(classKey);
+    throw new Error(`Need ${needed} redemptions from ${label} first (${pending.length} so far).`);
   }
   const batch = db.batch();
   pending.slice(0, needed).forEach((r) => {

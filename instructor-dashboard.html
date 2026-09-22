@@ -181,7 +181,7 @@
           </div>
         </div>
         <div class="collapsible-body">
-          <p class="muted">Chest options students can pick. Inactive rewards are hidden from new chest offers. Pooled rewards wait for several redemptions before you fulfill them.</p>
+          <p class="muted">Chest options students can pick. Inactive rewards are hidden from new chest offers. Pooled rewards wait for several redemptions <strong>in that class</strong> before you fulfill them.</p>
           <div class="leaderboard-table-wrap">
             <table>
               <thead>
@@ -208,7 +208,7 @@
           </button>
         </div>
         <div class="collapsible-body">
-          <p class="muted">Students pick these after unlocking a chest. Mark offline rewards fulfilled after you complete them. Pooled rewards wait until enough redemptions come in. Automated ones (frame upgrade, classmate XP) are applied by the site.</p>
+          <p class="muted">Students pick these after unlocking a chest. Mark offline rewards fulfilled after you complete them. Pooled rewards wait until enough students <strong>in the same class</strong> redeem them. Automated ones (frame upgrade, classmate XP) are applied by the site.</p>
           <div class="leaderboard-table-wrap">
             <table>
               <thead>
@@ -566,7 +566,7 @@
           <div class="form-group" id="reward-pool-group">
             <label for="reward-pool-size">Pooled redemptions needed</label>
             <input type="number" id="reward-pool-size" min="0" value="0" />
-            <p class="muted form-hint">0 or 1 = fulfill each one. 5 means you wait for 5 redemptions, then fulfill the pool.</p>
+            <p class="muted form-hint">0 or 1 = fulfill each one. 5 means you wait for 5 redemptions from that class, then fulfill that class’s pool.</p>
           </div>
           <div class="modal-actions">
             <button type="button" id="cancel-reward" class="btn btn-secondary">Cancel</button>
@@ -586,9 +586,9 @@
     <script src="js/cosmetics.js?v=35"></script>
     <script src="js/auth.js?v=27"></script>
     <script src="js/quest-catalog.js?v=36"></script>
-    <script src="js/db.js?v=39"></script>
+    <script src="js/db.js?v=40"></script>
     <script src="js/leaderboard.js?v=22"></script>
     <script src="js/collapse.js?v=26"></script>
-    <script src="js/instructor-dashboard.js?v=38"></script>
+    <script src="js/instructor-dashboard.js?v=39"></script>
   </body>
 </html>

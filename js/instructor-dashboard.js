@@ -424,7 +424,7 @@ function redemptionStatusLabel(redemption, pendingCount = 0) {
   if (redemption.status === 'fulfilled' && redemption.automated) return 'Automated';
   if (redemption.status === 'fulfilled') return 'Fulfilled';
   const poolSize = rewardPoolSize(redemption);
-  if (poolSize) return `Pooled ${pendingCount}/${poolSize}`;
+  if (poolSize) return `Pooled ${pendingCount}/${poolSize} this class`;
   return 'Needs fulfillment';
 }
 
@@ -438,10 +438,11 @@ function renderRedemptions(redemptions) {
     return;
   }
 
-  const pendingByReward = {};
+  const pendingByPool = {};
   latestRedemptions.forEach((r) => {
     if (r.status !== 'pending') return;
-    pendingByReward[r.rewardId] = (pendingByReward[r.rewardId] || 0) + 1;
+    const key = rewardPoolBucketKey(r.rewardId, r.classId);
+    pendingByPool[key] = (pendingByPool[key] || 0) + 1;
   });
   const poolButtonShown = {};
 
@@ -450,19 +451,21 @@ function renderRedemptions(redemptions) {
       const studentLabel = studentDisplayName(r.userId, r);
       const pending = r.status === 'pending';
       const poolSize = rewardPoolSize(r);
-      const pendingCount = pendingByReward[r.rewardId] || 0;
+      const classId = redemptionClassId(r);
+      const poolKey = rewardPoolBucketKey(r.rewardId, classId);
+      const pendingCount = pendingByPool[poolKey] || 0;
       let fulfillBtn = '';
       if (pending && !r.automated) {
         if (poolSize) {
-          if (pendingCount >= poolSize && !poolButtonShown[r.rewardId]) {
-            poolButtonShown[r.rewardId] = true;
-            fulfillBtn = `<button type="button" class="btn btn-success btn-sm fulfill-pool-btn" data-reward-id="${escapeHtml(r.rewardId)}" data-pool-size="${poolSize}">Fulfill pool (${poolSize})</button>`;
+          if (pendingCount >= poolSize && !poolButtonShown[poolKey]) {
+            poolButtonShown[poolKey] = true;
+            fulfillBtn = `<button type="button" class="btn btn-success btn-sm fulfill-pool-btn" data-reward-id="${escapeHtml(r.rewardId)}" data-class-id="${escapeHtml(classId)}" data-pool-size="${poolSize}">Fulfill ${escapeHtml(classLabel(classId))} (${poolSize})</button>`;
           }
         } else {
           fulfillBtn = `<button type="button" class="btn btn-success btn-sm fulfill-redemption-btn" data-id="${r.id}">Mark fulfilled</button>`;
         }
       }
-      const typeLabel = r.automated ? 'Automated' : poolSize ? `Pooled (${poolSize})` : 'Instructor';
+      const typeLabel = r.automated ? 'Automated' : poolSize ? `Pooled (${poolSize} / class)` : 'Instructor';
       return `
         <tr class="${pending ? 'redemption-pending' : ''}">
           <td>${formatDate(r.createdAt)}</td>
@@ -484,7 +487,7 @@ function renderRedemptions(redemptions) {
     btn.addEventListener('click', () => handleFulfillRedemption(btn.dataset.id));
   });
   tbody.querySelectorAll('.fulfill-pool-btn').forEach((btn) => {
-    btn.addEventListener('click', () => handleFulfillPool(btn.dataset.rewardId, btn.dataset.poolSize));
+    btn.addEventListener('click', () => handleFulfillPool(btn.dataset.rewardId, btn.dataset.poolSize, btn.dataset.classId));
   });
 }
 
@@ -500,12 +503,15 @@ async function handleFulfillRedemption(redemptionId) {
   }
 }
 
-async function handleFulfillPool(rewardId, poolSize) {
-  const btn = document.querySelector(`.fulfill-pool-btn[data-reward-id="${rewardId}"]`);
+async function handleFulfillPool(rewardId, poolSize, classId) {
+  const classKey = String(classId || '');
+  const btn = document.querySelector(
+    `.fulfill-pool-btn[data-reward-id="${rewardId}"][data-class-id="${classKey}"]`
+  );
   if (btn) btn.disabled = true;
   try {
-    const count = await fulfillRewardPool(rewardId, poolSize);
-    showToast(`Marked ${count} pooled redemption(s) fulfilled.`);
+    const count = await fulfillRewardPool(rewardId, poolSize, classKey);
+    showToast(`Marked ${count} pooled redemption(s) fulfilled for ${classLabel(classKey)}.`);
   } catch (err) {
     if (btn) btn.disabled = false;
     showToast(err.message || 'Could not fulfill that pool.', 'error');

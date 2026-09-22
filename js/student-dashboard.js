@@ -123,7 +123,7 @@ function renderRewardOffer(rewards) {
       if (r.automated) tags.push('<span class="tag">Automated</span>');
       else tags.push('<span class="tag pending">Instructor fulfills</span>');
       const poolSize = rewardPoolSize(r);
-      if (poolSize) tags.push(`<span class="tag">${poolSize}× pooled</span>`);
+      if (poolSize) tags.push(`<span class="tag">${poolSize}× pooled per class</span>`);
       return `
         <button type="button" class="reward-choice${selectedClass}" data-reward-id="${escapeHtml(r.id)}">
           <strong>${escapeHtml(r.name)}</strong>
@@ -385,7 +385,7 @@ function formatCompletionDate(timestamp, fallback = 'Completed') {
 function redemptionStatusLabelForStudent(redemption) {
   if (redemption.status === 'fulfilled' && redemption.automated) return 'Applied';
   if (redemption.status === 'fulfilled') return 'Fulfilled';
-  if (rewardPoolSize(redemption)) return 'Waiting for more claims';
+  if (rewardPoolSize(redemption)) return 'Waiting for more classmates';
   return 'Waiting for Jason';
 }
 
