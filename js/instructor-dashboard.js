@@ -1,5 +1,7 @@
 let studentsById = {};
 let rosterStudents = [];
+let latestCompletions = [];
+let latestRedemptions = [];
 let loadedRaids = [];
 let raidParticipations = [];
 let raidAwards = [];
@@ -164,6 +166,9 @@ function renderStudents(students) {
 
   if (!students.length) {
     tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No students yet.</td></tr>';
+    renderRaidProgress();
+    renderCompletions();
+    renderRedemptions();
     return;
   }
 
@@ -200,6 +205,8 @@ function renderStudents(students) {
   });
 
   renderRaidProgress();
+  renderCompletions();
+  renderRedemptions();
 }
 
 async function handleDeleteStudent(studentId) {
@@ -333,18 +340,30 @@ function renderRewards(rewards) {
   });
 }
 
+function studentDisplayName(userId, extra = {}) {
+  const student = studentsById[userId];
+  return (
+    student?.realName ||
+    extra.realName ||
+    student?.characterName ||
+    extra.characterName ||
+    'Unknown student'
+  );
+}
+
 function renderCompletions(completions) {
   const tbody = document.getElementById('completions-body');
+  if (!tbody) return;
+  if (Array.isArray(completions)) latestCompletions = completions;
 
-  if (!completions.length) {
+  if (!latestCompletions.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No completions yet.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = completions
+  tbody.innerHTML = latestCompletions
     .map((c) => {
-      const student = studentsById[c.userId];
-      const studentLabel = student?.realName || student?.characterName || 'Unknown student';
+      const studentLabel = studentDisplayName(c.userId, c);
       const answer = (c.responseText || '').trim();
       const pending = isPendingCompletion(c);
       const approveBtn = pending
@@ -412,23 +431,23 @@ function redemptionStatusLabel(redemption, pendingCount = 0) {
 function renderRedemptions(redemptions) {
   const tbody = document.getElementById('redemptions-body');
   if (!tbody) return;
+  if (Array.isArray(redemptions)) latestRedemptions = redemptions;
 
-  if (!redemptions.length) {
+  if (!latestRedemptions.length) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No reward redemptions yet.</td></tr>';
     return;
   }
 
   const pendingByReward = {};
-  redemptions.forEach((r) => {
+  latestRedemptions.forEach((r) => {
     if (r.status !== 'pending') return;
     pendingByReward[r.rewardId] = (pendingByReward[r.rewardId] || 0) + 1;
   });
   const poolButtonShown = {};
 
-  tbody.innerHTML = redemptions
+  tbody.innerHTML = latestRedemptions
     .map((r) => {
-      const student = studentsById[r.userId];
-      const studentLabel = r.realName || student?.realName || r.characterName || 'Unknown student';
+      const studentLabel = studentDisplayName(r.userId, r);
       const pending = r.status === 'pending';
       const poolSize = rewardPoolSize(r);
       const pendingCount = pendingByReward[r.rewardId] || 0;

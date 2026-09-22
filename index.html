@@ -19,9 +19,13 @@
     <div id="login-view" class="login-screen">
       <div class="logo" aria-hidden="true">⚔️</div>
       <h1>Class Quest</h1>
-      <p>Sign in with your SPSCC or Google account to join your class gamification adventure.</p>
+      <p>
+        Sign in with a <strong>Google account</strong> (Gmail is fine) to join your class gamification
+        adventure. Your SPSCC email usually won’t work here — the college uses Microsoft for student
+        accounts.
+      </p>
       <button type="button" id="google-sign-in" class="btn btn-google">
-        Sign in with SPSCC or Google
+        Sign in with Google
       </button>
       <p id="login-error" class="muted hidden" style="margin-top: 1rem; color: var(--danger)"></p>
     </div>
@@ -37,12 +41,13 @@
 
         <div class="privacy-notice" role="note">
           <p>
-            Sign up with your school (or any other) email. Your sign-in email is used only to log you in
-            and only visible to Jason. Your real name is optional and, if you share it, is visible only
-            to Jason as well, not to classmates. Prefer not to enter it here? That’s fine! Just tell
-            Jason who you are either by email or in person so he can match you to your account. Your
-            character name, class, XP, levels, badges, and leaderboard info are the only things visible
-            to classmates in your class.
+            Sign in with a Google account (a personal Gmail works). Your SPSCC email typically won’t
+            work for login because student accounts use Microsoft, not Google. Your Google sign-in
+            email is used only to log you in and is only visible to Jason. Your real name is optional
+            and, if you share it, is visible only to Jason as well, not to classmates. Prefer not to
+            enter it here? That’s fine! Just tell Jason who you are either by email or in person so he
+            can match you to your account. Your character name, class, XP, levels, badges, and
+            leaderboard info are the only things visible to classmates in your class.
           </p>
         </div>
 
@@ -76,7 +81,7 @@
     <script src="js/levels.js?v=26"></script>
     <script src="js/cosmetics.js?v=35"></script>
     <script src="js/auth.js?v=28"></script>
-    <script src="js/db.js?v=38"></script>
+    <script src="js/db.js?v=39"></script>
     <script>
       const loginView = document.getElementById('login-view');
       const loadingView = document.getElementById('loading-view');

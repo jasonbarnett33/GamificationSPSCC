@@ -325,6 +325,8 @@ async function completeQuest(userId, quest, options = {}) {
     userId,
     questId: quest.id,
     questName: quest.name,
+    realName: profile.realName || '',
+    characterName: profile.characterName || '',
     completedAt: firebase.firestore.FieldValue.serverTimestamp(),
     status,
     dayKey,
