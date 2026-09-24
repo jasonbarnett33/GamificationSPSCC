@@ -428,6 +428,42 @@ async function approveCompletion(completionId) {
   await syncStudentBadges(completion.userId);
 }
 
+const INSTRUCTOR_COMMENT_MAX_CHARS = 500;
+
+function normalizeInstructorComment(text) {
+  return String(text || '').trim().slice(0, INSTRUCTOR_COMMENT_MAX_CHARS);
+}
+
+async function saveCompletionInstructorComment(completionId, comment) {
+  const id = String(completionId || '').trim();
+  if (!id) throw new Error('Missing completion id.');
+  const cleaned = normalizeInstructorComment(comment);
+  await db.collection('completions').doc(id).set(
+    {
+      instructorComment: cleaned,
+      instructorCommentedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+  return cleaned;
+}
+
+async function saveRedemptionInstructorComment(redemptionId, comment) {
+  const id = String(redemptionId || '').trim();
+  if (!id) throw new Error('Missing redemption id.');
+  const cleaned = normalizeInstructorComment(comment);
+  await db.collection('redemptions').doc(id).set(
+    {
+      instructorComment: cleaned,
+      instructorCommentedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+  return cleaned;
+}
+
 async function getAllStudents() {
   const snap = await db.collection('users').where('role', '==', 'student').get();
   const students = snap.docs.map((d) => ({ id: d.id, ...d.data() }));

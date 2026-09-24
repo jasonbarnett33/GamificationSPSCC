@@ -357,7 +357,7 @@ function renderCompletions(completions) {
   if (Array.isArray(completions)) latestCompletions = completions;
 
   if (!latestCompletions.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No completions yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No completions yet.</td></tr>';
     return;
   }
 
@@ -365,18 +365,26 @@ function renderCompletions(completions) {
     .map((c) => {
       const studentLabel = studentDisplayName(c.userId, c);
       const answer = (c.responseText || '').trim();
+      const comment = (c.instructorComment || '').trim();
       const pending = isPendingCompletion(c);
-      const approveBtn = pending
-        ? `<button type="button" class="btn btn-success btn-sm approve-completion-btn" data-id="${c.id}">Approve</button>`
-        : '';
+      const actions = [];
+      if (pending) {
+        actions.push(
+          `<button type="button" class="btn btn-success btn-sm approve-completion-btn" data-id="${c.id}">Approve</button>`
+        );
+      }
+      actions.push(
+        `<button type="button" class="btn btn-secondary btn-sm comment-completion-btn" data-id="${c.id}">${comment ? 'Edit comment' : 'Comment'}</button>`
+      );
       return `
         <tr class="${pending ? 'completion-pending' : ''}">
           <td>${formatDate(c.completedAt)}</td>
           <td>${escapeHtml(c.questName || c.questId)}</td>
           <td class="completion-answer">${answer ? escapeHtml(answer) : '—'}</td>
+          <td class="completion-answer">${comment ? escapeHtml(comment) : '—'}</td>
           <td>${escapeHtml(studentLabel)}</td>
           <td>${escapeHtml(completionStatusLabel(c))}</td>
-          <td>${approveBtn}</td>
+          <td><div class="row-actions">${actions.join('')}</div></td>
         </tr>
       `;
     })
@@ -384,6 +392,9 @@ function renderCompletions(completions) {
 
   tbody.querySelectorAll('.approve-completion-btn').forEach((btn) => {
     btn.addEventListener('click', () => handleApproveCompletion(btn.dataset.id));
+  });
+  tbody.querySelectorAll('.comment-completion-btn').forEach((btn) => {
+    btn.addEventListener('click', () => handleCompletionComment(btn.dataset.id));
   });
 }
 
@@ -398,6 +409,24 @@ async function handleApproveCompletion(completionId) {
   } catch (err) {
     if (btn) btn.disabled = false;
     showToast(err.message || 'Could not approve quest.', 'error');
+  }
+}
+
+async function handleCompletionComment(completionId) {
+  const entry = latestCompletions.find((c) => c.id === completionId);
+  const current = entry?.instructorComment || '';
+  const next = window.prompt(
+    `Comment for the student (max ${INSTRUCTOR_COMMENT_MAX_CHARS} characters). Leave blank to clear.`,
+    current
+  );
+  if (next === null) return;
+  try {
+    await saveCompletionInstructorComment(completionId, next);
+    const updated = await getRecentCompletions();
+    renderCompletions(updated);
+    showToast(next.trim() ? 'Comment saved. Student can see it on Completed quests.' : 'Comment cleared.');
+  } catch (err) {
+    showToast(err.message || 'Could not save comment.', 'error');
   }
 }
 
@@ -434,7 +463,7 @@ function renderRedemptions(redemptions) {
   if (Array.isArray(redemptions)) latestRedemptions = redemptions;
 
   if (!latestRedemptions.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No reward redemptions yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No reward redemptions yet.</td></tr>';
     return;
   }
 
@@ -454,17 +483,25 @@ function renderRedemptions(redemptions) {
       const classId = redemptionClassId(r);
       const poolKey = rewardPoolBucketKey(r.rewardId, classId);
       const pendingCount = pendingByPool[poolKey] || 0;
-      let fulfillBtn = '';
+      const comment = (r.instructorComment || '').trim();
+      const actions = [];
       if (pending && !r.automated) {
         if (poolSize) {
           if (pendingCount >= poolSize && !poolButtonShown[poolKey]) {
             poolButtonShown[poolKey] = true;
-            fulfillBtn = `<button type="button" class="btn btn-success btn-sm fulfill-pool-btn" data-reward-id="${escapeHtml(r.rewardId)}" data-class-id="${escapeHtml(classId)}" data-pool-size="${poolSize}">Fulfill ${escapeHtml(classLabel(classId))} (${poolSize})</button>`;
+            actions.push(
+              `<button type="button" class="btn btn-success btn-sm fulfill-pool-btn" data-reward-id="${escapeHtml(r.rewardId)}" data-class-id="${escapeHtml(classId)}" data-pool-size="${poolSize}">Fulfill ${escapeHtml(classLabel(classId))} (${poolSize})</button>`
+            );
           }
         } else {
-          fulfillBtn = `<button type="button" class="btn btn-success btn-sm fulfill-redemption-btn" data-id="${r.id}">Mark fulfilled</button>`;
+          actions.push(
+            `<button type="button" class="btn btn-success btn-sm fulfill-redemption-btn" data-id="${r.id}">Mark fulfilled</button>`
+          );
         }
       }
+      actions.push(
+        `<button type="button" class="btn btn-secondary btn-sm comment-redemption-btn" data-id="${r.id}">${comment ? 'Edit comment' : 'Comment'}</button>`
+      );
       const typeLabel = r.automated ? 'Automated' : poolSize ? `Pooled (${poolSize} / class)` : 'Instructor';
       return `
         <tr class="${pending ? 'redemption-pending' : ''}">
@@ -475,9 +512,10 @@ function renderRedemptions(redemptions) {
             ${r.rewardDescription ? `<div class="muted quest-table-desc">${escapeHtml(r.rewardDescription)}</div>` : ''}
           </td>
           <td class="completion-answer">${escapeHtml(redemptionDetails(r))}</td>
+          <td class="completion-answer">${comment ? escapeHtml(comment) : '—'}</td>
           <td>${escapeHtml(typeLabel)}</td>
           <td>${escapeHtml(redemptionStatusLabel(r, pendingCount))}</td>
-          <td>${fulfillBtn}</td>
+          <td><div class="row-actions">${actions.join('')}</div></td>
         </tr>
       `;
     })
@@ -489,6 +527,25 @@ function renderRedemptions(redemptions) {
   tbody.querySelectorAll('.fulfill-pool-btn').forEach((btn) => {
     btn.addEventListener('click', () => handleFulfillPool(btn.dataset.rewardId, btn.dataset.poolSize, btn.dataset.classId));
   });
+  tbody.querySelectorAll('.comment-redemption-btn').forEach((btn) => {
+    btn.addEventListener('click', () => handleRedemptionComment(btn.dataset.id));
+  });
+}
+
+async function handleRedemptionComment(redemptionId) {
+  const entry = latestRedemptions.find((r) => r.id === redemptionId);
+  const current = entry?.instructorComment || '';
+  const next = window.prompt(
+    `Comment for the student (max ${INSTRUCTOR_COMMENT_MAX_CHARS} characters). Leave blank to clear.`,
+    current
+  );
+  if (next === null) return;
+  try {
+    await saveRedemptionInstructorComment(redemptionId, next);
+    showToast(next.trim() ? 'Comment saved. Student can see it under Redeemed rewards.' : 'Comment cleared.');
+  } catch (err) {
+    showToast(err.message || 'Could not save comment.', 'error');
+  }
 }
 
 async function handleFulfillRedemption(redemptionId) {

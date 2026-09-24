@@ -417,6 +417,7 @@ function renderRedeemedRewards(list = redemptions) {
       const status = redemptionStatusLabelForStudent(entry);
       const details = redemptionStudentDetails(entry);
       const description = (entry.rewardDescription || '').trim();
+      const comment = (entry.instructorComment || '').trim();
       return `
         <li class="quest-item">
           <div>
@@ -424,6 +425,7 @@ function renderRedeemedRewards(list = redemptions) {
             <p class="muted" style="margin: 0.35rem 0 0">${escapeHtml(when)} · ${escapeHtml(status)}</p>
             ${description ? `<p class="muted quest-table-desc">${escapeHtml(description)}</p>` : ''}
             ${details ? `<p class="quest-submitted-answer">${escapeHtml(details)}</p>` : ''}
+            ${comment ? `<p class="instructor-comment"><strong>Note from Jason:</strong> ${escapeHtml(comment)}</p>` : ''}
           </div>
         </li>
       `;
@@ -548,12 +550,14 @@ function renderCompleted(quests) {
       const status = completionStatusLabel(entry);
       const tags = quest ? renderQuestTags(quest, { includeProgress: false }) : '';
       const answer = (entry.responseText || '').trim();
+      const comment = (entry.instructorComment || '').trim();
       return `
         <li class="quest-item">
           <div>
             <strong>${escapeHtml(name)}</strong>
             <p class="muted" style="margin: 0.35rem 0 0">${escapeHtml(when)} · ${escapeHtml(status)}</p>
             ${answer ? `<p class="quest-submitted-answer">${escapeHtml(answer)}</p>` : ''}
+            ${comment ? `<p class="instructor-comment"><strong>Note from Jason:</strong> ${escapeHtml(comment)}</p>` : ''}
             ${tags ? `<div class="quest-meta">${tags}</div>` : ''}
           </div>
         </li>
