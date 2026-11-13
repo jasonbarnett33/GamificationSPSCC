@@ -1,0 +1,1 @@
+Here's the code for my gamification project, funded by SPSCC's Exceptional Faculty Award. If you have any questions, please email me at jbarnett2@spscc.edu, though I did not code this myself. If you want to tweak something and are not a programmer, your best bet is to use something like Claude Code or Cursor and give them my code.
